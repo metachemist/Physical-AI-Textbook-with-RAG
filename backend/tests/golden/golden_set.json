@@ -1,0 +1,182 @@
+[
+  {
+    "question": "What is the difference between a ROS 2 topic and a ROS 2 service?",
+    "expectedSection": "week-01-ros2-fundamentals",
+    "module": "module-1-ros2",
+    "difficulty": "conceptual"
+  },
+  {
+    "question": "How do you create a minimal ROS 2 publisher node in Python?",
+    "expectedSection": "week-01-ros2-fundamentals",
+    "module": "module-1-ros2",
+    "difficulty": "factual"
+  },
+  {
+    "question": "What is the role of the DDS middleware in ROS 2?",
+    "expectedSection": "week-02-ros2-advanced",
+    "module": "module-1-ros2",
+    "difficulty": "conceptual"
+  },
+  {
+    "question": "How does QoS (Quality of Service) affect ROS 2 communication reliability?",
+    "expectedSection": "week-02-ros2-advanced",
+    "module": "module-1-ros2",
+    "difficulty": "conceptual"
+  },
+  {
+    "question": "What is the purpose of colcon in a ROS 2 workspace?",
+    "expectedSection": "week-03-ros2-tooling",
+    "module": "module-1-ros2",
+    "difficulty": "factual"
+  },
+  {
+    "question": "How do you write a URDF file to describe a two-joint robot arm?",
+    "expectedSection": "week-04-ros2-navigation",
+    "module": "module-1-ros2",
+    "difficulty": "factual"
+  },
+  {
+    "question": "What is Nav2 and how does it integrate with ROS 2?",
+    "expectedSection": "week-04-ros2-navigation",
+    "module": "module-1-ros2",
+    "difficulty": "conceptual"
+  },
+  {
+    "question": "Why would a robot's navigation stack fail when the URDF joint limits are incorrect?",
+    "expectedSection": "week-05-ros2-capstone",
+    "module": "module-1-ros2",
+    "difficulty": "troubleshooting"
+  },
+  {
+    "question": "What is Gazebo and why is it used for robot simulation?",
+    "expectedSection": "week-06-gazebo",
+    "module": "module-2-simulation",
+    "difficulty": "factual"
+  },
+  {
+    "question": "How do you spawn a robot model in a Gazebo world from a launch file?",
+    "expectedSection": "week-06-gazebo",
+    "module": "module-2-simulation",
+    "difficulty": "factual"
+  },
+  {
+    "question": "What are the advantages of using Unity over Gazebo for robotics simulation?",
+    "expectedSection": "week-07-unity",
+    "module": "module-2-simulation",
+    "difficulty": "conceptual"
+  },
+  {
+    "question": "How do you connect Unity simulation to ROS 2 using the Unity Robotics Hub?",
+    "expectedSection": "week-07-unity",
+    "module": "module-2-simulation",
+    "difficulty": "factual"
+  },
+  {
+    "question": "Gazebo reports a collision mesh error on startup — what are common causes and fixes?",
+    "expectedSection": "week-06-gazebo",
+    "module": "module-2-simulation",
+    "difficulty": "troubleshooting"
+  },
+  {
+    "question": "What is NVIDIA Isaac Sim and how does it differ from Gazebo?",
+    "expectedSection": "week-08-isaac-sim",
+    "module": "module-3-nvidia-isaac",
+    "difficulty": "conceptual"
+  },
+  {
+    "question": "How do you set up a PhysX-based scene in Isaac Sim for manipulation tasks?",
+    "expectedSection": "week-08-isaac-sim",
+    "module": "module-3-nvidia-isaac",
+    "difficulty": "factual"
+  },
+  {
+    "question": "What is Isaac ROS and what advantages does it offer over standard ROS 2?",
+    "expectedSection": "week-09-isaac-ros",
+    "module": "module-3-nvidia-isaac",
+    "difficulty": "conceptual"
+  },
+  {
+    "question": "How does the Isaac ROS Visual SLAM package estimate robot pose?",
+    "expectedSection": "week-09-isaac-ros",
+    "module": "module-3-nvidia-isaac",
+    "difficulty": "factual"
+  },
+  {
+    "question": "What is Isaac Perceptor and which sensors does it support?",
+    "expectedSection": "week-10-isaac-perceptor",
+    "module": "module-3-nvidia-isaac",
+    "difficulty": "factual"
+  },
+  {
+    "question": "Isaac Sim crashes when loading a large scene with many assets — what optimisations should you apply?",
+    "expectedSection": "week-08-isaac-sim",
+    "module": "module-3-nvidia-isaac",
+    "difficulty": "troubleshooting"
+  },
+  {
+    "question": "What is a Vision-Language-Action (VLA) model?",
+    "expectedSection": "week-11-vla-foundations",
+    "module": "module-4-vla-humanoid",
+    "difficulty": "conceptual"
+  },
+  {
+    "question": "How does OpenVLA differ from RT-2 in terms of architecture?",
+    "expectedSection": "week-11-vla-foundations",
+    "module": "module-4-vla-humanoid",
+    "difficulty": "conceptual"
+  },
+  {
+    "question": "What hardware platforms are commonly used for humanoid robot development?",
+    "expectedSection": "week-12-humanoid-platforms",
+    "module": "module-4-vla-humanoid",
+    "difficulty": "factual"
+  },
+  {
+    "question": "How do you fine-tune a VLA model for a specific manipulation task?",
+    "expectedSection": "week-11-vla-foundations",
+    "module": "module-4-vla-humanoid",
+    "difficulty": "factual"
+  },
+  {
+    "question": "What is the role of imitation learning in training humanoid locomotion controllers?",
+    "expectedSection": "week-12-humanoid-platforms",
+    "module": "module-4-vla-humanoid",
+    "difficulty": "conceptual"
+  },
+  {
+    "question": "How do you deploy a trained ROS 2 node to a real robot versus simulation?",
+    "expectedSection": "week-13-deployment",
+    "module": "module-4-vla-humanoid",
+    "difficulty": "factual"
+  },
+  {
+    "question": "A VLA model performs well in simulation but poorly on the real robot — what sim-to-real gap causes are most likely?",
+    "expectedSection": "week-13-deployment",
+    "module": "module-4-vla-humanoid",
+    "difficulty": "troubleshooting"
+  },
+  {
+    "question": "What is SLAM and why is it important for autonomous mobile robots?",
+    "expectedSection": "week-09-isaac-ros",
+    "module": "module-3-nvidia-isaac",
+    "difficulty": "conceptual"
+  },
+  {
+    "question": "How do you set up a ROS 2 action server for long-running robot tasks?",
+    "expectedSection": "week-02-ros2-advanced",
+    "module": "module-1-ros2",
+    "difficulty": "factual"
+  },
+  {
+    "question": "What is domain randomisation and how is it used in Isaac Sim training?",
+    "expectedSection": "week-08-isaac-sim",
+    "module": "module-3-nvidia-isaac",
+    "difficulty": "conceptual"
+  },
+  {
+    "question": "How does sensor fusion work in a mobile robot perception pipeline?",
+    "expectedSection": "week-10-isaac-perceptor",
+    "module": "module-3-nvidia-isaac",
+    "difficulty": "conceptual"
+  }
+]

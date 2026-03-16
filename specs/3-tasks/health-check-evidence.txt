@@ -1,0 +1,24 @@
+# Health Check Evidence
+
+> Run the following command 3× at 1-minute intervals and paste timestamped output below.
+>
+> curl -s -w "\n[HTTP %{http_code}] %{time_total}s\n" https://<render-url>.onrender.com/health | python3 -m json.tool
+
+## Run 1
+
+[PENDING — replace with actual curl output]
+
+## Run 2
+
+[PENDING — replace with actual curl output]
+
+## Run 3
+
+[PENDING — replace with actual curl output]
+
+## Pass Criteria
+
+All 3 runs must return HTTP 200 with:
+  "db": "ok"
+  "qdrant": "ok"
+  "status": "ok"

@@ -1,0 +1,300 @@
+spec:
+  id: HACKATHON-PAI-ENTERPRISE
+  version: 1.0.0
+  type: system
+  environment: production-ready
+
+  description: >
+    Unified AI-native textbook platform for Physical AI &
+    Humanoid Robotics including:
+    - Docusaurus book engine
+    - RAG chatbot
+    - Selected-text answering
+    - Personalization engine
+    - Urdu translation layer
+    - Reusable AI subagents
+    - Hardware architecture documentation
+    - Deployment pipeline
+
+  ############################################################
+  # GLOBAL SETTINGS
+  ############################################################
+
+  globals:
+    llm_provider: openai
+    embedding_model: text-embedding-3-large
+    chunk_size: 700
+    chunk_overlap: 100
+    vector_top_k: 5
+
+  ############################################################
+  # FRONTEND — BOOK ENGINE
+  ############################################################
+
+  frontend:
+    framework: docusaurus
+    output_path: apps/book/
+
+    chapter_template:
+      required_sections:
+        - learning_objectives
+        - conceptual_foundation
+        - architecture_diagram_mermaid
+        - code_examples
+        - simulation_example
+        - hardware_mapping
+        - assessment_section
+
+    modules:
+      ros2:
+        topics:
+          - nodes_topics_services
+          - rclpy
+          - urdf
+      gazebo_unity:
+        topics:
+          - physics_simulation
+          - sensor_simulation
+          - digital_twin
+      nvidia_isaac:
+        topics:
+          - isaac_sim
+          - vslam
+          - nav2
+          - reinforcement_learning
+      vision_language_action:
+        topics:
+          - whisper_voice_control
+          - llm_task_planning
+          - capstone_autonomous_pipeline
+
+    artifacts:
+      - apps/book/docs/*
+      - apps/book/sidebars.js
+
+    validation:
+      - markdown_build_success
+      - sidebar_integrity_check
+
+  ############################################################
+  # BACKEND — RAG SYSTEM
+  ############################################################
+
+  backend:
+    framework: fastapi
+    root_path: apps/api/
+
+    vector_database:
+      provider: qdrant
+      collection: book_embeddings
+
+    relational_database:
+      provider: neon_postgres
+
+    services:
+
+      embedding_pipeline:
+        source_path: apps/book/docs/
+        chunk_size: 700
+        overlap: 100
+        metadata_fields:
+          - module
+          - chapter
+          - section
+
+        artifacts:
+          - apps/api/services/embedding.py
+
+        validation:
+          - embeddings_inserted
+          - metadata_queryable
+
+      retrieval_service:
+        endpoint: POST /chat
+
+        logic:
+          - embed_query
+          - retrieve_top_k: 5
+          - inject_context
+          - call_llm
+          - return_response
+
+        constraints:
+          - answer_only_from_retrieved_context
+          - no_hallucination
+
+        artifacts:
+          - apps/api/routes/chat.py
+          - apps/api/services/retrieval.py
+
+      highlighted_query_service:
+        endpoint: POST /highlighted-query
+
+        logic:
+          - bypass_vector_search
+          - construct_prompt_from_selected_text
+          - call_llm
+
+        constraint:
+          - restrict_scope_to_selected_text
+
+        artifacts:
+          - apps/api/routes/highlighted.py
+
+  ############################################################
+  # AUTH & PERSONALIZATION
+  ############################################################
+
+  personalization:
+    auth_provider: better_auth
+
+    user_profile_schema:
+      programming_level:
+        enum: [beginner, intermediate, advanced]
+      ros_experience:
+        enum: [none, basic, strong]
+      hardware_access:
+        enum: [none, jetson_only, full_lab]
+      math_strength:
+        enum: [weak, moderate, strong]
+
+    trigger:
+      ui_button: "Personalize for Me"
+
+    adaptation_logic:
+      - adjust_explanation_depth
+      - modify_examples
+      - inject_hardware_notes
+      - cache_personalized_version
+
+    artifacts:
+      - apps/api/services/personalization.py
+      - apps/book/components/PersonalizeButton.tsx
+
+    validation:
+      - profile_persisted
+      - differentiated_output_by_user
+
+  ############################################################
+  # TRANSLATION LAYER
+  ############################################################
+
+  translation:
+    language: urdu
+    trigger_button: "Translate to Urdu"
+
+    logic:
+      - extract_code_blocks
+      - translate_text_only
+      - preserve_markdown_format
+      - reinsert_code_blocks
+      - cache_translation
+
+    artifacts:
+      - apps/api/services/translation.py
+      - apps/book/components/TranslateButton.tsx
+
+    validation:
+      - formatting_preserved
+      - code_blocks_unchanged
+
+  ############################################################
+  # AI SUBAGENTS
+  ############################################################
+
+  agents:
+
+    robotics_explainer:
+      input:
+        concept_name: string
+      output:
+        structured_explanation: markdown
+      artifact:
+        - apps/api/agents/robotics_explainer.py
+
+    ros_code_generator:
+      input:
+        node_name: string
+        publish_topic: string
+        subscribe_topic: string
+      output:
+        rclpy_code: string
+      artifact:
+        - apps/api/agents/ros_code_generator.py
+
+    simulation_builder:
+      input:
+        scenario_description: string
+      output:
+        gazebo_setup_steps: markdown
+      artifact:
+        - apps/api/agents/simulation_builder.py
+
+    assessment_generator:
+      input:
+        chapter_content: markdown
+      output:
+        quiz_and_tasks: markdown
+      artifact:
+        - apps/api/agents/assessment_generator.py
+
+    hardware_advisor:
+      input:
+        budget: number
+        goals: string
+      output:
+        recommended_lab_setup: markdown
+      artifact:
+        - apps/api/agents/hardware_advisor.py
+
+  ############################################################
+  # HARDWARE DOCUMENTATION
+  ############################################################
+
+  hardware_documentation:
+
+    on_prem_lab:
+      workstation:
+        gpu: rtx_4070ti_or_higher
+        ram: 64gb
+        os: ubuntu_22_04
+      edge_device: jetson_orin
+      sensors: realsense_d435i
+      robots:
+        - unitree_go2
+        - unitree_g1
+        - tony_pi
+
+    cloud_lab:
+      provider: aws
+      instance_type: g5_2xlarge
+      estimated_cost_per_quarter_usd: 205
+      latency_mitigation: local_model_flashing
+
+    artifacts:
+      - apps/book/docs/hardware-architecture.md
+
+  ############################################################
+  # DEPLOYMENT
+  ############################################################
+
+  deployment:
+    frontend:
+      platform: vercel_or_github_pages
+    backend:
+      platform: render_or_railway
+    database:
+      neon_postgres
+    vector_db:
+      qdrant_cloud
+
+    requirements:
+      - https_enabled
+      - cors_configured
+      - env_variables_secured
+
+    validation:
+      - public_accessible_url
+      - chatbot_operational
+      - personalization_functional
+      - translation_functional

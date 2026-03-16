@@ -1,0 +1,82 @@
+name: CD Demo
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Release Artifact
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build docs bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          tar -czf dist/textbook-docs-${GITHUB_SHA}.tgz \
+            README.md Quick-Start-Guide.md constitution.md
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: textbook-docs-${{ github.sha }}
+          path: dist/textbook-docs-${{ github.sha }}.tgz
+
+  deploy-demo:
+    name: Deploy to Demo Environment
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: demo
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: textbook-docs-${{ github.sha }}
+          path: dist
+
+      - name: Pre-demo health check
+        shell: bash
+        env:
+          DEMO_HEALTHCHECK_URL: ${{ secrets.DEMO_HEALTHCHECK_URL }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${DEMO_HEALTHCHECK_URL:-}" ]; then
+            echo "DEMO_HEALTHCHECK_URL is not configured; skipping external health check."
+            exit 0
+          fi
+
+          curl --fail --silent --show-error --max-time 20 "$DEMO_HEALTHCHECK_URL" >/dev/null
+          echo "Demo health endpoint is reachable."
+
+      - name: Golden query check
+        shell: bash
+        env:
+          DEMO_GOLDEN_QUERY_URL: ${{ secrets.DEMO_GOLDEN_QUERY_URL }}
+          DEMO_GOLDEN_QUERY_TOKEN: ${{ secrets.DEMO_GOLDEN_QUERY_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${DEMO_GOLDEN_QUERY_URL:-}" ] || [ -z "${DEMO_GOLDEN_QUERY_TOKEN:-}" ]; then
+            echo "Golden query secrets missing; skipping golden query check."
+            exit 0
+          fi
+
+          curl --fail --silent --show-error --max-time 30 \
+            -H "Authorization: Bearer $DEMO_GOLDEN_QUERY_TOKEN" \
+            "$DEMO_GOLDEN_QUERY_URL" >/dev/null
+          echo "Golden query check passed."
+
+      - name: Deploy placeholder
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Replace this step with your platform deploy command (Railway/Render/Fly/etc.)."
+          echo "Artifact ready at dist/textbook-docs-${GITHUB_SHA}.tgz"

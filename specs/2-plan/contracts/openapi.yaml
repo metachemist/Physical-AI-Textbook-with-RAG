@@ -1,0 +1,516 @@
+openapi: "3.1.0"
+info:
+  title: Physical AI Textbook API
+  version: "1"
+  description: >
+    FastAPI backend for the Physical AI & Humanoid Robotics textbook.
+    All endpoints live under /api/v1.
+
+servers:
+  - url: https://<render-service>.onrender.com
+    description: Production (Render free tier)
+  - url: http://localhost:8000
+    description: Local development
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Better-Auth session token
+
+  schemas:
+    Citation:
+      type: object
+      required: [chapterId, sectionId, sourceUrl]
+      properties:
+        chapterId:
+          type: string
+          example: module-1-ros2-week1
+        sectionId:
+          type: string
+          example: dds-overview
+        sourceUrl:
+          type: string
+          example: /docs/module-1/ros2-week1#dds-overview
+
+    ErrorResponse:
+      type: object
+      required: [apiVersion, requestId, error]
+      properties:
+        apiVersion:
+          type: string
+          example: v1
+        requestId:
+          type: string
+          example: req_chat_001
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum:
+                - AUTH_REQUIRED
+                - VALIDATION_ERROR
+                - RATE_LIMITED
+                - NOT_FOUND
+                - INTERNAL_ERROR
+            message:
+              type: string
+            details:
+              type: object
+
+    HealthResponse:
+      type: object
+      required: [apiVersion, status, checks]
+      properties:
+        apiVersion:
+          type: string
+          example: v1
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        checks:
+          type: object
+          properties:
+            api:
+              type: string
+              enum: [ok, error]
+            database:
+              type: string
+              enum: [ok, error]
+            vectorStore:
+              type: string
+              enum: [ok, error]
+
+paths:
+
+  # ── Phase 1 ──────────────────────────────────────────────────────────────
+
+  /health:
+    get:
+      operationId: healthCheck
+      summary: Service health check
+      description: Returns status of API, database, and vector store. Must respond in ≤2s cold start.
+      responses:
+        "200":
+          description: All sub-checks healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              example:
+                apiVersion: v1
+                status: healthy
+                checks:
+                  api: ok
+                  database: ok
+                  vectorStore: ok
+        "503":
+          description: One or more sub-checks failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  # ── Phase 2 ──────────────────────────────────────────────────────────────
+
+  /api/v1/chat:
+    post:
+      operationId: chat
+      summary: RAG chat endpoint
+      description: >
+        Submit a question and receive a grounded, streaming response with citations.
+        Authentication optional; anonymous requests are allowed.
+        Rate limit: 60 req/min per IP.
+        The LLM is called via OpenRouter API (configurable model env var).
+        Falls back to acknowledgment message if no chunk scores ≥ 0.70 cosine similarity.
+      security: []   # optional auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message, chapterId]
+              properties:
+                message:
+                  type: string
+                  minLength: 1
+                  maxLength: 2000
+                  example: Explain ROS 2 DDS in simple terms
+                conversationId:
+                  type: string
+                  description: Browser session ID for rolling window context (3–5 exchanges)
+                  example: conv_a1b2c3
+                chapterId:
+                  type: string
+                  example: module-1-ros2-week1
+                selectedText:
+                  type: string
+                  minLength: 20
+                  nullable: true
+                  description: User-highlighted passage (≥20 chars). Triggers boosted retrieval from same section.
+                  example: ROS 2 uses DDS middleware for pub/sub communication.
+                stream:
+                  type: boolean
+                  default: true
+      responses:
+        "200":
+          description: >
+            Streamed (text/event-stream) when stream=true.
+            Each SSE event is a JSON chunk: {"delta": "...", "done": false}.
+            Final event: {"answer": "...", "citations": [...], "latencyMs": 1840, "done": true}.
+          content:
+            text/event-stream:
+              schema:
+                type: string
+            application/json:
+              schema:
+                type: object
+                required: [apiVersion, requestId, answer, citations, latencyMs]
+                properties:
+                  apiVersion:
+                    type: string
+                    example: v1
+                  requestId:
+                    type: string
+                  answer:
+                    type: string
+                  citations:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Citation"
+                  latencyMs:
+                    type: integer
+        "429":
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation error (e.g., selectedText < 20 chars falls back silently; empty message rejected)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/ingest:
+    post:
+      operationId: ingestChapter
+      summary: Trigger content ingestion for one chapter
+      description: >
+        Reads published chapter MDX, chunks at semantic boundaries (600–900 tokens, 100-token overlap),
+        generates embeddings (all-MiniLM-L6-v2), and upserts to Qdrant using (chapterId, chunkIndex)
+        composite key. Idempotent — safe to re-run after content updates.
+        Internal/admin use only; not exposed in demo.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [chapterId]
+              properties:
+                chapterId:
+                  type: string
+                  example: module-1-ros2-week1
+      responses:
+        "200":
+          description: Ingestion complete
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  apiVersion:
+                    type: string
+                  chapterId:
+                    type: string
+                  chunksUpserted:
+                    type: integer
+                  durationMs:
+                    type: integer
+
+  # ── Phase 3 ──────────────────────────────────────────────────────────────
+
+  /api/v1/personalize:
+    post:
+      operationId: personalizeSection
+      summary: Rewrite a section for the authenticated user's profile track
+      description: >
+        Rewrites section prose to match the user's track (beginner/software_engineer/hardware_robotics/accelerated).
+        Track is derived from user profile at read time using the priority rules table.
+        Preserves all heading text, heading levels, code block content, and code block fences exactly.
+        Personalization is session-scoped — not persisted.
+        Rate limit: 20 req/min per authenticated user.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [chapterId, sectionId, sourceMarkdown]
+              properties:
+                chapterId:
+                  type: string
+                  example: module-3-isaac-week8
+                sectionId:
+                  type: string
+                  example: vslam-basics
+                sourceMarkdown:
+                  type: string
+                  description: Original section markdown including headings and code blocks
+      responses:
+        "200":
+          description: Personalized markdown
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [apiVersion, requestId, personalizedMarkdown, appliedTrack]
+                properties:
+                  apiVersion:
+                    type: string
+                    example: v1
+                  requestId:
+                    type: string
+                  personalizedMarkdown:
+                    type: string
+                  appliedTrack:
+                    type: string
+                    enum: [beginner, software_engineer, hardware_robotics, accelerated]
+                  appliedProfile:
+                    type: object
+                    properties:
+                      track:
+                        type: string
+                      pythonLevel:
+                        type: string
+                      rosExperience:
+                        type: boolean
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                apiVersion: v1
+                requestId: req_per_xxx
+                error:
+                  code: AUTH_REQUIRED
+                  message: Authentication required to use personalization
+
+  /api/v1/translate:
+    post:
+      operationId: translateSection
+      summary: Translate a section to Urdu
+      description: >
+        Translates section prose to Urdu while preserving all heading levels, bullet nesting,
+        bold/italic markers, and code block fences. Code block content is NOT translated.
+        Provides formatPreserved boolean for validation.
+        Rate limit: 20 req/min per authenticated user.
+        p95 latency target ≤ 5s.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sourceMarkdown, chapterId, sectionId]
+              properties:
+                sourceMarkdown:
+                  type: string
+                  description: Original section markdown
+                chapterId:
+                  type: string
+                  example: module-2-simulation-week6
+                sectionId:
+                  type: string
+                  example: sensor-fusion
+                targetLanguage:
+                  type: string
+                  default: ur
+                  enum: [ur]
+      responses:
+        "200":
+          description: Translated markdown
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [apiVersion, requestId, translatedMarkdown, formatPreserved]
+                properties:
+                  apiVersion:
+                    type: string
+                    example: v1
+                  requestId:
+                    type: string
+                  translatedMarkdown:
+                    type: string
+                    example: "### سینسر فیوژن\n..."
+                  formatPreserved:
+                    type: boolean
+                    description: True if heading structure and code fences are structurally identical to source
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/agents/{agentName}:
+    post:
+      operationId: invokeAgent
+      summary: Invoke a subagent (quiz_generator, chapter_summarizer, prerequisite_mapper)
+      description: >
+        Authenticated endpoint for all three subagents.
+        All responses are grounded in chapter content from the vector store.
+        Rate limit: 20 req/min per authenticated user.
+        p95 latency target ≤ 5s.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: agentName
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [quiz_generator, chapter_summarizer, prerequisite_mapper]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [input]
+              properties:
+                input:
+                  type: object
+                  description: Agent-specific input
+                  oneOf:
+                    - title: quiz_generator input
+                      properties:
+                        chapterId:
+                          type: string
+                        difficulty:
+                          type: string
+                          enum: [easy, medium, hard]
+                        count:
+                          type: integer
+                          minimum: 1
+                          maximum: 10
+                          default: 5
+                    - title: chapter_summarizer input
+                      properties:
+                        chapterId:
+                          type: string
+                        level:
+                          type: string
+                          enum: [beginner, intermediate, advanced]
+                    - title: prerequisite_mapper input
+                      properties:
+                        topic:
+                          type: string
+                        chapterId:
+                          type: string
+      responses:
+        "200":
+          description: Agent output
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [apiVersion, requestId, agentName, output]
+                properties:
+                  apiVersion:
+                    type: string
+                    example: v1
+                  requestId:
+                    type: string
+                  agentName:
+                    type: string
+                  output:
+                    type: object
+                    description: Agent-specific output (see examples below)
+              examples:
+                quiz_generator:
+                  value:
+                    apiVersion: v1
+                    requestId: req_agent_001
+                    agentName: quiz_generator
+                    output:
+                      questions:
+                        - question: What is VLA?
+                          options: [A, B, C, D]
+                          answer: B
+                          explanation: VLA stands for Vision-Language-Action...
+                chapter_summarizer:
+                  value:
+                    apiVersion: v1
+                    requestId: req_agent_002
+                    agentName: chapter_summarizer
+                    output:
+                      summary: This chapter covers...
+                      keyPoints:
+                        - ROS 2 uses DDS for communication
+                        - Publishers and subscribers are decoupled
+                        - QoS profiles control reliability
+                      citations:
+                        - chapterId: module-1-ros2-week1
+                          sectionId: dds-overview
+                          sourceUrl: /docs/module-1/ros2-week1#dds-overview
+                prerequisite_mapper:
+                  value:
+                    apiVersion: v1
+                    requestId: req_agent_003
+                    agentName: prerequisite_mapper
+                    output:
+                      prerequisites:
+                        - concept: ROS 2 Node Lifecycle
+                          recommendedSection: /docs/module-1/ros2-week1#node-lifecycle
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Auth endpoints (Better-Auth passthrough) ─────────────────────────────
+
+  /api/auth/{path}:
+    post:
+      operationId: authHandler
+      summary: Better-Auth passthrough (signup, signin, signout, session)
+      description: >
+        All Better-Auth routes are proxied through FastAPI to the Better-Auth handler.
+        Key routes: POST /api/auth/sign-up/email, POST /api/auth/sign-in/email,
+        POST /api/auth/sign-out, GET /api/auth/session.
+      parameters:
+        - name: path
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Auth response (Better-Auth format)

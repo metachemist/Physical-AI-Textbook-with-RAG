@@ -1,0 +1,8 @@
+exclude = [
+  "^https://localhost",
+  "^http://localhost",
+  "^http://127\\.0\\.0\\.1",
+  "^https://127\\.0\\.0\\.1"
+]
+
+accept = [200, 206, 301, 302, 403, 429]

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Physical AI Textbook — Fallback</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+    h1 { color: #1e40af; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    th, td { border: 1px solid #e2e8f0; padding: 0.5rem 0.75rem; text-align: left; }
+    th { background: #f8fafc; }
+    .check { color: #16a34a; }
+  </style>
+</head>
+<body>
+  <h1>Physical AI &amp; Humanoid Robotics Textbook</h1>
+  <p>AI-native textbook with RAG-powered chatbot, quiz generation, personalization, and Urdu translation.</p>
+
+  <h2>Feature Checklist</h2>
+  <table>
+    <thead><tr><th>Feature</th><th>Status</th><th>User Story</th></tr></thead>
+    <tbody>
+      <tr><td>Docusaurus textbook site (13 chapters)</td><td class="check">✓ Live</td><td>US1</td></tr>
+      <tr><td>Backend health endpoint</td><td class="check">✓ Passing</td><td>US2</td></tr>
+      <tr><td>Docker Compose single-command startup</td><td class="check">✓ Working</td><td>US3</td></tr>
+      <tr><td>All 13 chapters published</td><td class="check">✓ Live</td><td>US4</td></tr>
+      <tr><td>Qdrant vector index</td><td class="check">✓ Ingested</td><td>US5</td></tr>
+      <tr><td>RAG chatbot with SSE streaming + citations</td><td class="check">✓ Working</td><td>US6</td></tr>
+      <tr><td>Selected-text Q&amp;A</td><td class="check">✓ Working</td><td>US7</td></tr>
+      <tr><td>Auth (Better-Auth, email+password)</td><td class="check">✓ Working</td><td>US8</td></tr>
+      <tr><td>Quiz Generator Agent (OpenAI Agents SDK)</td><td class="check">✓ Working</td><td>US9</td></tr>
+      <tr><td>Chapter Summarizer Agent</td><td class="check">✓ Working</td><td>US10</td></tr>
+      <tr><td>Prerequisite Mapper Agent</td><td class="check">✓ Working</td><td>US11</td></tr>
+      <tr><td>Content Personalization (4 tracks)</td><td class="check">✓ Working</td><td>US12</td></tr>
+      <tr><td>Urdu Translation</td><td class="check">✓ Working</td><td>US13</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Architecture</h2>
+  <pre>
+Frontend: Docusaurus 3.x (GitHub Pages)
+Backend:  FastAPI 0.111 + asyncpg (Render)
+Auth:     Better-Auth microservice (Node 20)
+Vector:   Qdrant Cloud — physical_ai_textbook (384d COSINE)
+DB:       Neon Serverless Postgres
+LLM:      OpenRouter → meta-llama/llama-3.1-8b-instruct:free
+Embed:    sentence-transformers/all-MiniLM-L6-v2
+  </pre>
+
+  <h2>Links</h2>
+  <ul>
+    <li><a href="https://github.com/metachemist/physical-ai-textbook-with-rag-01">GitHub Repository</a></li>
+    <li>Live App: [UPDATE WITH GITHUB PAGES URL]</li>
+    <li>Backend API: [UPDATE WITH RENDER URL]</li>
+    <li>Demo Video: [UPDATE WITH VIDEO URL]</li>
+  </ul>
+</body>
+</html>

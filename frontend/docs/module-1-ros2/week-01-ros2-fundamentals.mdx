@@ -1,0 +1,70 @@
+---
+sidebar_position: 1
+title: "Week 1: Introduction to Physical AI"
+---
+
+# Introduction to Physical AI
+
+## Learning Objectives
+
+By the end of this chapter, you will be able to:
+
+- Define physical AI and explain its relationship to embodied intelligence
+- Identify key sensor systems used in humanoid robotics (LiDAR, cameras, IMUs, force/torque)
+- Describe the current landscape of humanoid robotics platforms
+- Explain how physical laws constrain AI behavior in the real world
+
+## What is Physical AI?
+
+Physical AI refers to artificial intelligence systems that interact with and operate in the physical world through embodied agents — robots, autonomous vehicles, drones, and humanoid platforms. Unlike purely digital AI systems that process text or images in software, physical AI must contend with gravity, friction, sensor noise, and the unpredictable dynamics of real-world environments.
+
+The convergence of advances in large language models, computer vision, and robotic control has created a new paradigm: robots that can understand natural language instructions, perceive their surroundings through multiple sensor modalities, and execute complex physical tasks with increasing dexterity.
+
+## Sensor Systems for Humanoid Robotics
+
+Modern humanoid robots rely on a suite of complementary sensors to perceive and interact with their environment:
+
+**LiDAR (Light Detection and Ranging)** emits laser pulses and measures their return time to build precise 3D point clouds of the surrounding environment. This is critical for navigation, obstacle avoidance, and mapping in both indoor and outdoor settings.
+
+**Cameras** provide rich visual information through RGB imaging, depth sensing (stereo or structured light), and event-based vision. Multi-camera arrays give humanoids a wide field of view for manipulation tasks and human interaction.
+
+**Inertial Measurement Units (IMUs)** combine accelerometers and gyroscopes to track the robot's orientation and acceleration. For bipedal robots, IMU data is essential for maintaining balance during locomotion.
+
+**Force/Torque Sensors** measure the forces and moments applied at joints and end effectors, enabling compliant manipulation — the ability to grasp objects with appropriate force without crushing or dropping them.
+
+```python
+# Example: Reading IMU data in ROS 2
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Imu
+
+class ImuSubscriber(Node):
+    def __init__(self):
+        super().__init__('imu_subscriber')
+        self.subscription = self.create_subscription(
+            Imu, '/imu/data', self.imu_callback, 10
+        )
+
+    def imu_callback(self, msg):
+        self.get_logger().info(
+            f'Orientation: x={msg.orientation.x:.3f}, '
+            f'y={msg.orientation.y:.3f}, z={msg.orientation.z:.3f}'
+        )
+
+def main():
+    rclpy.init()
+    node = ImuSubscriber()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
+```
+
+## The Humanoid Robotics Landscape
+
+The humanoid robotics field has seen rapid advancement with platforms from multiple organizations pushing the boundaries of what embodied AI can achieve. Key platforms include Boston Dynamics' Atlas, Tesla's Optimus, Figure's Figure 01 and 02, Agility Robotics' Digit, and Unitree's H1 and G1 humanoids.
+
+Each platform makes different trade-offs between degrees of freedom, payload capacity, battery life, and sensor configuration. What unites them is the trend toward leveraging foundation models — large pre-trained neural networks — for perception, planning, and control.
+
+## Chapter Summary
+
+Physical AI represents the frontier where artificial intelligence meets the physical world. Understanding the sensor modalities (LiDAR, cameras, IMUs, force/torque), the constraints imposed by physics, and the current landscape of humanoid platforms provides the foundation for the rest of this course. In the following chapters, we will dive into ROS 2 as the software framework that ties these components together.

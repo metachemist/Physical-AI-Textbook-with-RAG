@@ -1,0 +1,42 @@
+[project]
+name = "physical-ai-textbook-backend"
+version = "0.1.0"
+description = "FastAPI backend for the Physical AI & Humanoid Robotics textbook"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.30",
+    "qdrant-client>=1.9",
+    "asyncpg>=0.29",
+    "alembic>=1.13",
+    "sentence-transformers>=2.0",
+    "langchain-text-splitters",
+    "tiktoken",
+    "python-frontmatter",
+    "python-dotenv",
+    "slowapi",
+    "httpx",
+    "openai-agents",
+    "pydantic-settings",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff",
+    "pytest",
+    "pytest-asyncio",
+]
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
